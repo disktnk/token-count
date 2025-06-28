@@ -89,7 +89,9 @@ class AhoCorasick:
 
             # Special handling for byte tokens.
             if len(row) > 2 and row[2] == "BYTE":
-                assert len(token) == 6 and token.startswith("<0x") and token.endswith(">"), row[0]
+                assert (
+                    len(token) == 6 and token.startswith("<0x") and token.endswith(">")
+                ), row[0]
                 self._bytes[int(row[0][3:5], 16)] = token_id
                 continue
 
@@ -114,8 +116,12 @@ class AhoCorasick:
         for s in suffixes:
             suffix_to_id[s] = num_pieces
             if s != "":
-                self._to_suffix_id[ord(s[0]) << 32 | suffix_to_id[s[1:]]] = np.int32(num_pieces)
-            num_pieces += 1 + sum(s[:i] in suffix_to_score for i in range(1, len(s) + 1))
+                self._to_suffix_id[ord(s[0]) << 32 | suffix_to_id[s[1:]]] = np.int32(
+                    num_pieces
+                )
+            num_pieces += 1 + sum(
+                s[:i] in suffix_to_score for i in range(1, len(s) + 1)
+            )
         assert suffix_to_id[""] == 0, suffix_to_id[""]
 
         # Build _table, which is a flattened table representing the Trie structure for the Aho-Corasick.
@@ -130,7 +136,9 @@ class AhoCorasick:
                     continue
                 self._table[i, TABLE_PIECE_LENGTH] = piece_length
                 self._table[i, TABLE_TOKEN_ID] = token_to_token_id.get(piece, -1)
-                self._table[i, TABLE_SCORE] = round(score * 1e4) if math.isfinite(score) else INVALID_SCORE
+                self._table[i, TABLE_SCORE] = (
+                    round(score * 1e4) if math.isfinite(score) else INVALID_SCORE
+                )
                 self._table[i, TABLE_PIECE_ID] = suffix_to_id[piece]
                 i += 1
 
@@ -168,7 +176,9 @@ class AhoCorasick:
             # Find the next suffix ID by iterating the suffix IDs of prefixes of the current suffix.
             # NOTE: If no suffix ID is found, suffix_id will be set to 0.
             for p in range(suffix_id, len(table)):
-                suffix_id = to_suffix_id.get(c << 32 | table[p, TABLE_PIECE_ID], np.int32(0))
+                suffix_id = to_suffix_id.get(
+                    c << 32 | table[p, TABLE_PIECE_ID], np.int32(0)
+                )
                 # If a next suffix ID is found or a sentinel row is reached, break the loop.
                 if suffix_id > 0 or table[p, TABLE_SCORE] == UNKNOWN_SCORE:
                     break
@@ -185,11 +195,15 @@ class AhoCorasick:
                         scores[i] = s
                         path[i, PATH_TOKEN_LENGTH] = piece_length
                         path[i, PATH_TOKEN_ID] = table[p, TABLE_TOKEN_ID]
-                        path[i, PATH_NUM_TOKENS] = path[i + piece_length, PATH_NUM_TOKENS] + 1
+                        path[i, PATH_NUM_TOKENS] = (
+                            path[i + piece_length, PATH_NUM_TOKENS] + 1
+                        )
                         if score == UNKNOWN_SCORE:
                             # Add number of bytes to represent `c` in UTF-8 (minus 1; 1 is already
                             # added above).
-                            path[i, PATH_NUM_TOKENS] += (c >= 0x80) + (c >= 0x800) + (c >= 0x10000)
+                            path[i, PATH_NUM_TOKENS] += (
+                                (c >= 0x80) + (c >= 0x800) + (c >= 0x10000)
+                            )
 
                 # If it reaches a sentinel row, break the loop.
                 if score == UNKNOWN_SCORE:
@@ -283,7 +297,9 @@ class Plamo2Tokenizer(PreTrainedTokenizer):  # type: ignore
             kwargs["add_bos_token"] = False
         if "add_eos_token" not in kwargs:
             kwargs["add_eos_token"] = False
-        self.data: list[Any] = [json.loads(line) for line in open(vocab_file, "r", encoding="utf-8")]
+        self.data: list[Any] = [
+            json.loads(line) for line in open(vocab_file, "r", encoding="utf-8")
+        ]
         self.vocab: dict[str, int] = {v[0]: i for i, v in enumerate(self.data)}
         self.aho_corasick = AhoCorasick()
         self.aho_corasick.build(self.data)
@@ -336,7 +352,10 @@ class Plamo2Tokenizer(PreTrainedTokenizer):  # type: ignore
     def convert_tokens_to_string(self, tokens: List[str]) -> str:
         """Converts a sequence of tokens (string) in a single string."""
         return b"".join(
-            [bytes([int(t[3:5], 16)]) if t.startswith("<0x") else t.encode("utf-8") for t in tokens]
+            [
+                bytes([int(t[3:5], 16)]) if t.startswith("<0x") else t.encode("utf-8")
+                for t in tokens
+            ]
         ).decode("utf-8", errors="replace")
 
     def _tokenize(self, text: str) -> Any:
@@ -364,7 +383,9 @@ class Plamo2Tokenizer(PreTrainedTokenizer):  # type: ignore
 
         return output
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(
+        self, save_directory: str, filename_prefix: Optional[str] = None
+    ) -> Tuple[str]:
         """
         Save the vocabulary and special tokens file to a directory.
 
@@ -379,10 +400,14 @@ class Plamo2Tokenizer(PreTrainedTokenizer):  # type: ignore
             logger.error(f"Vocabulary path ({save_directory}) should be a directory")
             return ("",)
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "")
+            + VOCAB_FILES_NAMES["vocab_file"],
         )
 
-        if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file) and os.path.isfile(self.vocab_file):
+        if os.path.abspath(self.vocab_file) != os.path.abspath(
+            out_vocab_file
+        ) and os.path.isfile(self.vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
         elif not os.path.isfile(self.vocab_file):
             with open(out_vocab_file, "w") as f:
