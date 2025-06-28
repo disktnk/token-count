@@ -1,0 +1,31 @@
+# Byte-code files
+*.pyc
+__pycache__/
+.pytest_cache/
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Editor/IDE specific files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Environment variables
+.env
