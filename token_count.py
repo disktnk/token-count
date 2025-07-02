@@ -1,9 +1,11 @@
 import argparse
+import os
 import re
 from pathlib import Path
 
 import frontmatter
 
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 from tokenizer.tokenization_plamo import Plamo2Tokenizer
 
 tokenizer: Plamo2Tokenizer = None
