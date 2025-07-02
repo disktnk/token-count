@@ -92,12 +92,25 @@ def update(target: Path) -> None:
 
 
 class MarkdownHandler(FileSystemEventHandler):
+
+    updated_table: dict[Path, float] = {}
+
     def on_modified(self, event: FileSystemEvent) -> None:
         modified_path = Path(str(event.src_path))
         if modified_path.suffix != ".md":
             return
         if modified_path.name.endswith(".tmp.md"):
             return
+
+        modified_time = modified_path.stat().st_mtime
+        previous_modified_time = self.updated_table.setdefault(modified_path, 0.0)
+        if previous_modified_time + 1 > modified_time:
+            return
+        self.updated_table[modified_path] = modified_time
+
+        if modified_path.stat().st_mtime < time.time() - 1:
+            return
+
         print(f"File modified: {modified_path}")
         update(modified_path)
 
