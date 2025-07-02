@@ -77,6 +77,17 @@ def crawl_markdown_files(target_dir: str) -> list[Path]:
     return list(dir.rglob("*.md"))
 
 
+def update(target: Path) -> None:
+    if target.is_dir():
+        markdown_paths = crawl_markdown_files(target)
+        process_markdowns(markdown_paths)
+
+    elif target.is_file():
+        if not target.suffix == ".md":
+            print(f"Error: {target} is not a markdown file.")
+        insert_token_count(target)
+
+
 def parse_arg() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Crawl markdown files in a directory.")
     parser.add_argument(
@@ -93,12 +104,4 @@ if __name__ == "__main__":
 
     initialize_tokenizer()
 
-    if target.is_dir():
-        markdown_paths = crawl_markdown_files(target)
-        process_markdowns(markdown_paths)
-
-    elif target.is_file():
-        if not target.suffix == ".md":
-            print(f"Error: {target} is not a markdown file.")
-            exit(1)
-        insert_token_count(target)
+    update(target)
