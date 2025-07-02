@@ -11,10 +11,12 @@ dependencies = [
     "python-frontmatter>=1.1.0",
     "tokenizers>=0.21.2",
     "transformers==4.53.0",
+    "watchdog>=6.0.0",
 ]
 
 [dependency-groups]
 dev = [
+    "mypy>=1.16.1",
     "ruff>=0.12.1",
 ]
 

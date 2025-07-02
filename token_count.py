@@ -1,9 +1,12 @@
 import argparse
 import os
 import re
+import time
 from pathlib import Path
 
 import frontmatter
+from watchdog.events import FileSystemEventHandler, FileSystemEvent
+from watchdog.observers import Observer
 
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 from tokenizer.tokenization_plamo import Plamo2Tokenizer
@@ -90,12 +93,28 @@ def update(target: Path) -> None:
         insert_token_count(target)
 
 
+class MarkdownHandler(FileSystemEventHandler):
+    def on_modified(self, event: FileSystemEvent) -> None:
+        modified_path = Path(event.src_path)
+        if modified_path.suffix != ".md":
+            return
+        if modified_path.name.endswith(".tmp.md"):
+            return
+        print(f"File modified: {event.src_path}")
+        update(Path(event.src_path))
+
+
 def parse_arg() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Crawl markdown files in a directory.")
     parser.add_argument(
         "target",
         type=str,
         help="The target file or directory to crawl for markdown files.",
+    )
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="Watch the target directory for changes and update token counts automatically.",
     )
     return parser.parse_args()
 
@@ -105,5 +124,17 @@ if __name__ == "__main__":
     target = Path(args.target)
 
     initialize_tokenizer()
+
+    if args.watch:
+        observer = Observer()
+        observer.schedule(MarkdownHandler(), str(target), recursive=True)
+        observer.start()
+
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            observer.stop()
+        observer.join()
 
     update(target)
