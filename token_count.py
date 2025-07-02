@@ -3,15 +3,16 @@ import os
 import re
 import time
 from pathlib import Path
+from typing import Optional
 
-import frontmatter
-from watchdog.events import FileSystemEventHandler, FileSystemEvent
+import frontmatter  # type: ignore
+from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
 from tokenizer.tokenization_plamo import Plamo2Tokenizer
 
-tokenizer: Plamo2Tokenizer = None
+tokenizer: Optional[Plamo2Tokenizer] = None
 
 
 def initialize_tokenizer() -> Plamo2Tokenizer:
@@ -22,6 +23,8 @@ def initialize_tokenizer() -> Plamo2Tokenizer:
 
 
 def count_tokens(text: str) -> int:
+    if tokenizer is None:
+        raise ValueError("Tokenizer is not initialized.")
     encoded = tokenizer.encode(text)
     return len(encoded)
 
@@ -77,14 +80,9 @@ def process_markdowns(markdown_paths: list[Path]) -> None:
         insert_token_count(path)
 
 
-def crawl_markdown_files(target_dir: str) -> list[Path]:
-    dir = Path(target_dir)
-    return list(dir.rglob("*.md"))
-
-
 def update(target: Path) -> None:
     if target.is_dir():
-        markdown_paths = crawl_markdown_files(target)
+        markdown_paths = list(target.rglob("*.md"))
         process_markdowns(markdown_paths)
 
     elif target.is_file():
@@ -95,13 +93,13 @@ def update(target: Path) -> None:
 
 class MarkdownHandler(FileSystemEventHandler):
     def on_modified(self, event: FileSystemEvent) -> None:
-        modified_path = Path(event.src_path)
+        modified_path = Path(str(event.src_path))
         if modified_path.suffix != ".md":
             return
         if modified_path.name.endswith(".tmp.md"):
             return
-        print(f"File modified: {event.src_path}")
-        update(Path(event.src_path))
+        print(f"File modified: {modified_path}")
+        update(modified_path)
 
 
 def parse_arg() -> argparse.Namespace:

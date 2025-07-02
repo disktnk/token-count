@@ -22,3 +22,10 @@ dev = [
 
 [tool.ruff.lint]
 select = ["I"]
+
+[tool.mypy]
+exclude = "tokenizer/.*"
+
+[[tool.mypy.overrides]]
+module = ['tokenizer.tokenization_plamo']
+disable_error_code = ["import-untyped", "override"]
