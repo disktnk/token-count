@@ -1,5 +1,17 @@
 # Token Count
 
+Insert number of token into front matter of the target markdown files.
+
+```md
+---
+date: '2025-03-30T06:00:00+09:00'
+title: 'blog title'
+tokens: 641 
+---
+contents ...
+```
+
+
 ## execute
 
 ```sh
