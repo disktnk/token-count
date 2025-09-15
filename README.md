@@ -18,6 +18,12 @@ contents ...
 $ python token_count.py path/to/watch --watch
 ```
 
+or use `uv`
+
+```sh
+$ uv run token_count.py path/to/watch --watch
+```
+
 ## for development
 
 Download tokenizer
@@ -38,5 +44,5 @@ $ uv run mypy .
 Format check
 
 ```sh
-$ ruff check . --fix
+$ uv run ruff check . --fix
 ```
