@@ -1,11 +1,12 @@
 import argparse
+import io
 import os
-import re
 import time
 from pathlib import Path
 from typing import Optional
 
 import frontmatter  # type: ignore
+from ruamel.yaml import YAML
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
@@ -29,6 +30,16 @@ def count_tokens(text: str) -> int:
     return len(encoded)
 
 
+def _order_metadata(metadata: dict) -> dict:
+    """Order metadata keys."""
+    order = ["date", "title"]
+    # first "date", "title", then others in alphabetical order
+    ordered_metadata = {key: metadata[key] for key in order if key in metadata}
+    other_keys = sorted([key for key in metadata if key not in order])
+    sorted_metadata = {key: metadata[key] for key in other_keys}
+    return {**ordered_metadata, **sorted_metadata}
+
+
 def insert_token_count(path: Path) -> None:
     with open(path, "r", encoding="utf-8") as f:
         post = frontmatter.load(f)
@@ -44,28 +55,26 @@ def insert_token_count(path: Path) -> None:
     if prev_tokens == num_tokens:
         return
 
-    # Memo:
-    # python-frontmatter is omit "'" in dumping, and unexpectedly changes date
-    # format, cannot handler these customizations. So dump string directly.
-    token_str = f"tokens: {num_tokens}"
-    with open(path, "r", encoding="utf-8") as f:
-        content = f.read()
-    pattern = "(---\n.*?)(---\n)"
-    match = re.search(pattern, content, flags=re.DOTALL)
-    if not match:
-        print(f"Error: No frontmatter found in {path}.")
-        return
-    
-    if prev_tokens == -1:
-       content = re.sub(pattern, f"\\1{token_str}\n---\n", content, count=1, flags=re.DOTALL)
-    else:
-        prev_token_str = f"tokens: {prev_tokens}"
-        content = content.replace(prev_token_str, token_str)
+    # Update tokens in metadata
+    post["tokens"] = num_tokens
 
+    # Order metadata and ensure string types for date/title
+    post.metadata = _order_metadata(post.metadata)
+    for k in ["date", "title"]:
+        if k in post.metadata:
+            post.metadata[k] = str(post.metadata[k])
+
+    # Use ruamel.yaml to maintain formatting and order
+    yaml = YAML()
+    yaml.default_flow_style = False
     temp_path = path.with_suffix(".tmp.md")
     try:
+        meta_stream = io.StringIO()
+        yaml.dump(post.metadata, meta_stream)
+        yaml_text = meta_stream.getvalue().strip()
+        new_content = f"---\n{yaml_text}\n---\n{post.content}\n"
         with open(temp_path, "w", encoding="utf-8") as f:
-            f.write(content)
+            f.write(new_content)
         temp_path.rename(path)
     except Exception as e:
         if temp_path.exists():

@@ -9,6 +9,7 @@ dependencies = [
     "numba==0.61.2",
     "numpy==2.2.6",
     "python-frontmatter>=1.1.0",
+    "ruamel-yaml>=0.18.15",
     "tokenizers>=0.21.2",
     "transformers==4.53.0",
     "watchdog>=6.0.0",
@@ -16,6 +17,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "black>=25.9.0",
     "mypy>=1.16.1",
     "ruff>=0.12.1",
 ]
