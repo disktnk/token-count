@@ -19,7 +19,9 @@ tokenizer: Optional[Plamo2Tokenizer] = None
 def initialize_tokenizer() -> Plamo2Tokenizer:
     global tokenizer
     if tokenizer is None:
-        tokenizer = Plamo2Tokenizer(vocab_file="tokenizer/tokenizer.jsonl")
+        script_dir = Path(__file__).parent
+        tokenizer_file = script_dir / "tokenizer" / "tokenizer.jsonl"
+        tokenizer = Plamo2Tokenizer(vocab_file=str(tokenizer_file))
     return tokenizer
 
 
