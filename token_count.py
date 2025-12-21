@@ -91,15 +91,22 @@ def process_markdowns(markdown_paths: list[Path]) -> None:
         insert_token_count(path)
 
 
-def update(target: Path) -> None:
-    if target.is_dir():
-        markdown_paths = list(target.rglob("*.md"))
-        process_markdowns(markdown_paths)
-
-    elif target.is_file():
-        if not target.suffix == ".md":
-            print(f"Error: {target} is not a markdown file.")
-        insert_token_count(target)
+def update(targets: list[Path]) -> None:
+    """Process one or more markdown files or directories."""
+    markdown_paths = []
+    
+    for target in targets:
+        if target.is_dir():
+            markdown_paths.extend(target.rglob("*.md"))
+        elif target.is_file():
+            if target.suffix != ".md":
+                print(f"Error: {target} is not a markdown file.")
+                continue
+            markdown_paths.append(target)
+        else:
+            print(f"Error: {target} does not exist.")
+    
+    process_markdowns(markdown_paths)
 
 
 class MarkdownHandler(FileSystemEventHandler):
@@ -123,7 +130,7 @@ class MarkdownHandler(FileSystemEventHandler):
             return
 
         print(f"File modified: {modified_path}")
-        update(modified_path)
+        update([modified_path])
 
 
 def parse_arg() -> argparse.Namespace:
@@ -131,7 +138,8 @@ def parse_arg() -> argparse.Namespace:
     parser.add_argument(
         "target",
         type=str,
-        help="The target file or directory to crawl for markdown files.",
+        nargs="+",
+        help="One or more target files or directories to crawl for markdown files.",
     )
     parser.add_argument(
         "--watch",
@@ -143,13 +151,18 @@ def parse_arg() -> argparse.Namespace:
 
 if __name__ == "__main__":
     args = parse_arg()
-    target = Path(args.target)
+    targets = [Path(t) for t in args.target]
 
     initialize_tokenizer()
 
     if args.watch:
+        # Watch mode only supports single directory target
+        if len(targets) > 1 or not targets[0].is_dir():
+            print("Error: --watch mode requires a single directory target.")
+            exit(1)
+        
         observer = Observer()
-        observer.schedule(MarkdownHandler(), str(target), recursive=True)
+        observer.schedule(MarkdownHandler(), str(targets[0]), recursive=True)
         observer.start()
 
         try:
@@ -158,5 +171,5 @@ if __name__ == "__main__":
         except KeyboardInterrupt:
             observer.stop()
         observer.join()
-
-    update(target)
+    else:
+        update(targets)
