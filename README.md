@@ -35,14 +35,10 @@ $ curl -L -H "Authorization: Bearer $HF_ACCESS_TOKEN" https://huggingface.co/pfn
 $ curl -L -H "Authorization: Bearer $HF_ACCESS_TOKEN" https://huggingface.co/pfnet/plamo-2.1-8b-cpt/resolve/main/tokenization_plamo.py -o tokenization_plamo.py
 ```
 
-Type check
+Type and format check
 
 ```sh
 $ uv run mypy .
-```
-
-Format check
-
-```sh
+$ uv run ruff formt .
 $ uv run ruff check . --fix
 ```

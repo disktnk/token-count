@@ -3,7 +3,6 @@ import io
 import os
 import time
 from pathlib import Path
-from typing import Optional
 
 import frontmatter  # type: ignore
 from ruamel.yaml import YAML
@@ -11,9 +10,9 @@ from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
 os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
-from tokenizer.tokenization_plamo import Plamo2Tokenizer
+from tokenizer.tokenization_plamo import Plamo2Tokenizer  # noqa: E402
 
-tokenizer: Optional[Plamo2Tokenizer] = None
+tokenizer: Plamo2Tokenizer | None = None
 
 
 def initialize_tokenizer() -> Plamo2Tokenizer:
@@ -37,13 +36,13 @@ def _order_metadata(metadata: dict) -> dict:
     order = ["date", "title"]
     # first "date", "title", then others in alphabetical order
     ordered_metadata = {key: metadata[key] for key in order if key in metadata}
-    other_keys = sorted([key for key in metadata if key not in order])
+    other_keys = sorted(key for key in metadata if key not in order)
     sorted_metadata = {key: metadata[key] for key in other_keys}
     return {**ordered_metadata, **sorted_metadata}
 
 
 def insert_token_count(path: Path) -> None:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         post = frontmatter.load(f)
 
     if "title" not in post:
@@ -93,8 +92,8 @@ def process_markdowns(markdown_paths: list[Path]) -> None:
 
 def update(targets: list[Path]) -> None:
     """Process one or more markdown files or directories."""
-    markdown_paths = []
-    
+    markdown_paths: list[Path] = []
+
     for target in targets:
         if target.is_dir():
             markdown_paths.extend(target.rglob("*.md"))
@@ -105,12 +104,11 @@ def update(targets: list[Path]) -> None:
             markdown_paths.append(target)
         else:
             print(f"Error: {target} does not exist.")
-    
+
     process_markdowns(markdown_paths)
 
 
 class MarkdownHandler(FileSystemEventHandler):
-
     updated_table: dict[Path, float] = {}
 
     def on_modified(self, event: FileSystemEvent) -> None:
@@ -144,7 +142,10 @@ def parse_arg() -> argparse.Namespace:
     parser.add_argument(
         "--watch",
         action="store_true",
-        help="Watch the target directory for changes and update token counts automatically.",
+        help=(
+            "Watch the target directory for changes and update token counts "
+            "automatically."
+        ),
     )
     return parser.parse_args()
 
@@ -159,8 +160,8 @@ if __name__ == "__main__":
         # Watch mode only supports single directory target
         if len(targets) > 1 or not targets[0].is_dir():
             print("Error: --watch mode requires a single directory target.")
-            exit(1)
-        
+            raise SystemExit(1)
+
         observer = Observer()
         observer.schedule(MarkdownHandler(), str(targets[0]), recursive=True)
         observer.start()

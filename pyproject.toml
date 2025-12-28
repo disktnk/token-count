@@ -15,15 +15,30 @@ dependencies = [
     "watchdog>=6.0.0",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
     "black>=25.9.0",
     "mypy>=1.16.1",
     "ruff>=0.12.1",
 ]
 
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+extend-exclude = [".venv", "tokenizer"]
+
 [tool.ruff.lint]
-select = ["I"]
+select = ["E", "F", "I", "B", "UP"]
+ignore = []
+
+[tool.ruff.format]
+# near to black setting
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
+docstring-code-format = true
+docstring-code-line-length = 88
 
 [tool.mypy]
 exclude = "tokenizer/.*"

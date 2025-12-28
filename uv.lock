@@ -496,7 +496,7 @@ dependencies = [
     { name = "watchdog" },
 ]
 
-[package.dev-dependencies]
+[package.optional-dependencies]
 dev = [
     { name = "black" },
     { name = "mypy" },
@@ -505,22 +505,19 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "black", marker = "extra == 'dev'", specifier = ">=25.9.0" },
     { name = "llvmlite", specifier = ">=0.44.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.16.1" },
     { name = "numba", specifier = "==0.61.2" },
     { name = "numpy", specifier = "==2.2.6" },
     { name = "python-frontmatter", specifier = ">=1.1.0" },
     { name = "ruamel-yaml", specifier = ">=0.18.15" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.12.1" },
     { name = "tokenizers", specifier = ">=0.21.2" },
     { name = "transformers", specifier = "==4.53.0" },
     { name = "watchdog", specifier = ">=6.0.0" },
 ]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "black", specifier = ">=25.9.0" },
-    { name = "mypy", specifier = ">=1.16.1" },
-    { name = "ruff", specifier = ">=0.12.1" },
-]
+provides-extras = ["dev"]
 
 [[package]]
 name = "tokenizers"
