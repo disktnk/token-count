@@ -39,6 +39,6 @@ Type and format check
 
 ```sh
 $ uv run mypy .
-$ uv run ruff formt .
+$ uv run ruff format .
 $ uv run ruff check . --fix
 ```
